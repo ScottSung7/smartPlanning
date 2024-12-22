@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>무기력 인덱스</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .gauge {
+            width: 200px;
+            height: 100px;
+            background-color: #e0e0e0;
+            border-radius: 100px 100px 0 0;
+            overflow: hidden;
+            position: relative;
+            margin: 20px auto;
+        }
+        .needle {
+            width: 4px;
+            height: 100px;
+            background-color: black;
+            position: absolute;
+            left: 98px;
+            bottom: 0;
+            transform-origin: bottom center;
+            transition: transform 0.5s;
+        }
+        input[type="range"] {
+            width: 200px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        #recommendation {
+            margin-top: 20px;
+            font-style: italic;
+            white-space: pre-line;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>무기력 인덱스</h1>
+        <div class="gauge">
+            <div class="needle" id="needle"></div>
+        </div>
+        <input type="range" id="indexSlider" min="0" max="100" value="50">
+        <p id="indexValue">50</p>
+        <p id="indexCategory">중간</p>
+        <p id="recommendation"></p>
+        <button id="saveBtn">저장</button>
+        <button id="backToCalendar">캘린더로 돌아가기</button>
+    </div>
+
+    <script>
+        const indexSlider = document.getElementById('indexSlider');
+        const indexValue = document.getElementById('indexValue');
+        const indexCategory = document.getElementById('indexCategory');
+        const recommendation = document.getElementById('recommendation');
+        const needle = document.getElementById('needle');
+        const saveBtn = document.getElementById('saveBtn');
+        const backToCalendarBtn = document.getElementById('backToCalendar');
+
+        function updateIndex(value) {
+            indexValue.textContent = value;
+            needle.style.transform = `rotate(${(value - 50) * 1.8}deg)`;
+
+            let category;
+            let recommendationText = '';
+            if (value < 20) {
+                category = "중증 무기력";
+                recommendationText = "유연하고 목표 위주의 계획으로\n목표를 향해 조금씩 다가가 보세요";
+            } else if (value < 40) {
+                category = "무기력";
+                recommendationText = "유연하고 목표 위주의 계획으로\n목표를 향해 조금씩 다가가 보세요";
+            } else if (value < 60) {
+                category = "중간";
+            } else if (value < 80) {
+                category = "열정";
+                recommendationText = "구체적이고 시간 위주의 계획으로\n생산성을 향상시켜 보세요";
+            }  else if (value < 90) {
+                category = "열정 충만";
+                recommendationText = "구체적이고 시간 위주의 계획으로\n생산성을 향상시켜 보세요";
+            } else {
+                category = "열정 과다";
+                recommendationText = "시간 위주의 계획이 좋지만 \n 조금은 번아웃을 조심해야 할 수도 있어요.";
+            }
+
+            indexCategory.textContent = category;
+            recommendation.textContent = recommendationText;
+        }
+
+        indexSlider.addEventListener('input', (e) => updateIndex(e.target.value));
+
+        saveBtn.addEventListener('click', () => {
+            localStorage.setItem('savedIndex', indexSlider.value);
+            alert('인덱스가 저장되었습니다.');
+        });
+
+        backToCalendarBtn.addEventListener('click', () => {
+            window.location.href = 'calendar.html';
+        });
+
+        // 페이지 로드 시 주간 성공률 반영
+        window.addEventListener('load', () => {
+            const weeklySuccessRate = parseFloat(localStorage.getItem('weeklySuccessRate')) || 0;
+            let indexValue;
+
+            if (weeklySuccessRate >= 90) indexValue = 90;
+            else if (weeklySuccessRate >= 60) indexValue = Math.floor(weeklySuccessRate);
+            else if (weeklySuccessRate >= 40) indexValue = 50;
+            else if (weeklySuccessRate >= 20) indexValue = 30;
+            else indexValue = 10;
+
+            indexSlider.value = indexValue;
+            updateIndex(indexValue);
+        });
+    </script>
+</body>
+</html>

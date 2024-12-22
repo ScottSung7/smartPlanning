@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일정 관리 앱</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        #app-container {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        #calendar-app {
+            flex: 2;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-right: 20px;
+            position: relative;
+        }
+        #todo-container {
+            flex: 1;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        select {
+            padding: 5px;
+            font-size: 16px;
+        }
+        #calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .calendar-cell {
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 60px;
+        }
+        .calendar-cell.today {
+            background-color: #e6f3ff;
+        }
+        .calendar-cell input {
+            width: 40px;
+            text-align: center;
+            margin: 5px auto 0 auto;
+        }
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #success-rate-bar {
+            width: 200px;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #success-rate-fill {
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.3s ease;
+        }
+        #goto-index {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: none;
+            cursor: pointer;
+        }
+        .tab-button.active {
+            background-color: #e0e0e0;
+        }
+        .tab-content {
+            display: none;
+        }
+        #todo-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        #todo-list li {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delete-todo {
+            color: red;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        #memo-content {
+            width: 95%;
+            height: 200px;
+            resize: none;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            background-color: #ffffa5;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        #memory-usage {
+            position: absolute;
+            top: 28px;
+            right: 100px;
+            font-size: 12px;
+            color: #666;
+        }
+        .todo-checkbox {
+            margin-right: 10px;
+        }
+        .todo-input-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        #new-todo {
+            flex-grow: 1;
+            padding: 5px;
+        }
+        .btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none; /* Webkit 기반 브라우저 (Chrome, Safari 등) */
+          margin: 0; 
+        }
+
+        input[type="number"] {
+          -moz-appearance: textfield; /* Firefox 기반 브라우저 */
+          appearance: textfield; /* 기타 브라우저 */
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+      <div id="calendar-app">
+         <div id="memory-usage"></div>
+         <div class="controls">
+             <select id="year-select"></select>
+             <select id="month-select"></select>
+         </div>
+         <div id="calendar-grid"></div>
+         <div class="summary">
+             <select id="summary-type">
+                 <option value="daily">일일 성공률</option>
+                 <option value="weekly">주간 성공률</option>
+                 <option value="monthly">월간 성공률</option>
+             </select>
+             <div id="success-rate-bar">
+                 <div id="success-rate-fill"></div>
+             </div>
+         </div>
+         <p id="success-rate-text"></p>
+         <button id="goto-index">인덱스 페이지로 이동</button>
+      </div>
+
+      <div id="todo-container">
+         <div class="tabs">
+             <button class="tab-button active" onclick="openTab('todo')">To-Do</button>
+             <button class="tab-button" onclick="openTab('memo')">Memo</button>
+         </div>
+
+         <div id="todo-tab" class="tab-content" style="display:block;">
+             <h3 id="todo-date"></h3>
+             <ul id="todo-list"></ul>
+             <div class="todo-input-container">
+                 <input type="text" id="new-todo" placeholder="할 일을 입력하세요">
+                 <button id="add-todo" class="btn btn-primary">추가</button>
+                 <button id="apply-success-rate" class="btn btn-success">일정에 성공률 적용</button>
+             </div>
+         </div>
+
+         <div id="memo-tab" class="tab-content">
+             <h3 id="memo-date"></h3>
+             <textarea id="memo-content" placeholder="메모를 입력하세요..."></textarea>
+         </div>
+      </div>  
+    </div>  
+
+    <!-- JavaScript Code -->
+    <script>  
+      const yearSelect = document.getElementById('year-select');  
+      const monthSelect = document.getElementById('month-select');  
+      const calendarGrid = document.getElementById('calendar-grid');  
+      const summaryType = document.getElementById('summary-type');  
+      const successRateFill = document.getElementById('success-rate-fill');  
+      const successRateText = document.getElementById('success-rate-text');  
+      const gotoIndexBtn = document.getElementById('goto-index');  
+      const todoContainer = document.getElementById('todo-container');  
+      const todoDate = document.getElementById('todo-date');  
+      const todoList = document.getElementById('todo-list');  
+      const newTodoInput = document.getElementById('new-todo');  
+      const addTodoButton = document.getElementById('add-todo');  
+      const memoDate = document.getElementById('memo-date');  
+      const memoContent = document.getElementById('memo-content');  
+      const applySuccessRateButton = document.getElementById('apply-success-rate');  
+
+      let currentDate = new Date();  
+      let currentYear = currentDate.getFullYear();  
+      let currentMonth = currentDate.getMonth();  
+
+      let successRates = JSON.parse(localStorage.getItem('successRates')) || {};  
+      let todos = JSON.parse(localStorage.getItem('todos')) || {};  
+      let isTodoVisible = localStorage.getItem('isTodoVisible') === 'true';  
+
+      function initializeSelects() {  
+          for (let year = currentYear - 5; year <= currentYear + 5; year++) {  
+              const option = document.createElement('option');  
+              option.value = year;  
+              option.textContent = year;  
+              yearSelect.appendChild(option);  
+          }  
+
+          yearSelect.value = currentYear;
+
+          const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];  
+
+          monthNames.forEach((month, index) => {  
+              const option = document.createElement('option');  
+              option.value = index;  
+              option.textContent = month;  
+              monthSelect.appendChild(option);  
+          });  
+
+          monthSelect.value = currentMonth;  
+      }  
+
+      function updateCalendar() {  
+          calendarGrid.innerHTML = '';  
+          const firstDay = new Date(currentYear, currentMonth, 1);  
+          const lastDay = new Date(currentYear, currentMonth + 1, 0);  
+          const daysInMonth = lastDay.getDate();  
+
+          for (let i = 0; i < firstDay.getDay(); i++) {  
+              calendarGrid.appendChild(createEmptyCell());  
+          }  
+
+          for (let day = 1; day <= daysInMonth; day++) {  
+              calendarGrid.appendChild(createDateCell(day));  
+          }  
+
+          updateMemoryUsage();  
+      }  
+
+      function createEmptyCell() {  
+          const cell = document.createElement('div');  
+          cell.className = 'calendar-cell';  
+          return cell;  
+      }  
+
+      function createDateCell(day) {  
+        const cell = document.createElement('div');
+        cell.className = 'calendar-cell';
+        if (day === currentDate.getDate() && currentMonth === currentDate.getMonth() && currentYear === currentDate.getFullYear()) {
+            cell.classList.add('today');
+        }
+        const dateSpan = document.createElement('span');
+        dateSpan.textContent = day;
+        cell.appendChild(dateSpan);
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.max = '100';
+        input.value = getSuccessRate(day);
+        input.addEventListener('blur', () => {
+            if (input.value.trim() === '') {
+                input.value = "0";
+            }
+            updateSuccessRate(day, input.value);
+        });
+        input.addEventListener('change', (e) => updateSuccessRate(day, e.target.value));
+        input.addEventListener('click', (e) => e.stopPropagation());
+        cell.appendChild(input);
+
+        cell.addEventListener('click', () => toggleTodoList(`${currentYear}-${currentMonth + 1}-${day}`));
+
+        return cell;
+      }  
+
+      function getSuccessRate(day) {    
+          const key = `${currentYear}-${currentMonth}-${day}`;    
+          
+           return successRates[key] || 0;    
+      }    
+
+     function updateSuccessRate(day, value) {    
+         const key = `${currentYear}-${currentMonth}-${day}`;    
+         
+         if (parseInt(value) !== 0) {    
+             successRates[key] = parseInt(value);    
+         } else {    
+             delete successRates[key];    
+         }    
+         
+         localStorage.setItem('successRates', JSON.stringify(successRates));    
+         
+         updateSummary();    
+         
+         updateMemoryUsage();    
+     }    
+
+     function updateSummary() {    
+         const type = summaryType.value;    
+         
+         let total = 0;    
+         
+         let count = 0;    
+         
+         const lastDay = new Date(currentYear, currentMonth + 1, 0).getDate();    
+         
+         const today = currentDate.getDate();    
+         
+         const currentWeekStart = today - currentDate.getDay();    
+
+         for (let day = 1; day <= lastDay; day++) {    
+             const rate = getSuccessRate(day);    
+
+             if (type === 'daily' && day === today) {    
+                 total += rate;    
+                 count++;   
+                 break;
+
+             } else if (type === 'weekly' && day >= currentWeekStart && day < currentWeekStart + 7) {   
+                 total += rate;
+
+                 count++;    
+
+             } else if (type === 'monthly') {
+
+                 total += rate;
+
+                 count++;    
+
+             }    
+
+         }    
+
+         const averageRate = count > 0 ? total / count : 0;
+
+         successRateFill.style.width = `${averageRate}%`;    
+
+         successRateText.textContent =
+           `${type === 'daily' ? '오늘의' :
+           type === 'weekly' ? '주간' :
+           '월간'} 성공률은 ${averageRate.toFixed(2)}%입니다.`;
+
+
+           calculateWeeklySuccessRate();    
+
+     }
+
+     function calculateWeeklySuccessRate() {
+        const today = currentDate.getDate();
+        const currentWeekStart = today - currentDate.getDay();
+        let total = 0;
+        let count = 0;
+
+        for (let day = currentWeekStart; day < currentWeekStart + 7; day++) {
+            const rate = getSuccessRate(day);
+            total += rate;
+            count++;
+        }
+
+        const weeklyAverageRate = count > 0 ? total / count : 0;
+        localStorage.setItem('weeklySuccessRate', weeklyAverageRate.toFixed(2));
+    }
+
+    function toggleTodoList(date) {
+        todoDate.textContent = date;
+        memoDate.textContent = date;
+        if (todos[date]) {
+            showTodoList(date);
+            memoContent.value = todos[date].memo || '';
+        } else {
+            todoList.innerHTML = '';
+            memoContent.value = '';
+        }
+        todoContainer.style.display = 'block';
+        openTab('todo');
+    }
+
+    function showTodoList(date) {
+        todoList.innerHTML = '';
+        if (todos[date] && todos[date].tasks) {
+            todos[date].tasks.forEach((todo, index) => {
+                const li = document.createElement('li');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'todo-checkbox';
+                checkbox.checked = todo.completed;
+                checkbox.addEventListener('change', () => toggleTodoCompletion(date, index));
+                li.appendChild(checkbox);
+                const span = document.createElement('span');
+                span.textContent = todo.text;
+                li.appendChild(span);
+                const deleteButton = document.createElement('span');
+                deleteButton.textContent = 'x';
+                deleteButton.className = 'delete-todo';
+                deleteButton.onclick = () => deleteTodo(date, index);
+                li.appendChild(deleteButton);
+                todoList.appendChild(li);
+            });
+        }
+    }
+
+    function addTodo() {
+        const date = todoDate.textContent;
+        const newTodo = newTodoInput.value.trim();
+        if (newTodo) {
+            if (!todos[date]) {
+                todos[date] = { tasks: [], memo: '' };
+            }
+            todos[date].tasks.push({ text: newTodo, completed: false });
+            saveTodoAndMemo(date);
+            newTodoInput.value = '';
+            showTodoList(date);
+        }
+    }
+
+    function deleteTodo(date, index) {
+        todos[date].tasks.splice(index, 1);
+        
+        saveTodoAndMemo(date);
+        showTodoList(date);
+    }
+
+    function toggleTodoCompletion(date, index) {
+        todos[date].tasks[index].completed = !todos[date].tasks[index].completed;
+        saveTodoAndMemo(date);
+    }
+
+    function saveMemo() {
+        const date = memoDate.textContent;
+        const memoText = memoContent.value.trim();
+        if (!todos[date]) {
+            todos[date] = { tasks: [], memo: '' };
+        }
+        if (memoText === '') {
+            delete todos[date].memo;
+            if (todos[date].tasks.length === 0) {
+                delete todos[date];
+            }
+            updateMemoryUsage(); 
+        } else {
+            todos[date].memo = memoText;
+        }
+        saveTodoAndMemo(date);
+        updateMemoryUsage(); 
+    }
+
+     function saveTodoAndMemo(date) {
+        if ((todos[date] == undefined) || (todos[date].tasks.length === 0 && !todos[date].memo.trim())) {
+            delete todos[date];
+        }
+        localStorage.setItem('todos', JSON.stringify(todos));
+        updateMemoryUsage();
+    }
+    
+    
+    function openTab(tabName) {
+        const todoTab = document.getElementById('todo-tab');
+        const memoTab = document.getElementById('memo-tab');
+        const todoButton = document.querySelector('.tab-button:nth-child(1)');
+        const memoButton = document.querySelector('.tab-button:nth-child(2)');
+    
+        if (tabName === 'todo') {
+            todoTab.style.display = 'block';
+            memoTab.style.display = 'none';
+            todoButton.classList.add('active');
+            memoButton.classList.remove('active');
+        } else {
+            todoTab.style.display = 'none';
+            memoTab.style.display = 'block';
+            todoButton.classList.remove('active');
+            memoButton.classList.add('active');
+        }
+    }
+    
+    function updateMemoryUsage() {
+        const totalSpace = 5 * 1024 * 1024; // 5MB in bytes
+        const usedSpace = new Blob([JSON.stringify(localStorage)]).size;
+        let usageText;
+    
+        if (usedSpace < 1024) {
+            usageText = `${usedSpace} bytes`;
+        } else if (usedSpace < 1024 * 1024) {
+            usageText = `${(usedSpace / 1024).toFixed(2)} KB`;
+        } else {
+            usageText = `${(usedSpace / (1024 * 1024)).toFixed(2)} MB`;
+        }
+    
+        document.getElementById('memory-usage').textContent = `메모리: ${usageText} / 5 MB 사용 중`;
+    }
+
+    function applySuccessRate() {
+        const date = todoDate.textContent;
+        if (todos[date] && todos[date].tasks) {
+            const totalTasks = todos[date].tasks.length;
+            const completedTasks = todos[date].tasks.filter(task => task.completed).length;
+            const successRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+            
+            const [year, month, day] = date.split('-');
+            updateSuccessRate(parseInt(day), successRate.toFixed(0));
+            
+            const cell = document.querySelector(`.calendar-cell:nth-child(${parseInt(day) + new Date(year, month - 1, 1).getDay()})`);
+            if (cell) {
+                const input = cell.querySelector('input');
+                if (input) {
+                    input.value = successRate.toFixed(0);
+                }
+            }
+        }
+    }
+    
+    // Event listeners and initialization
+    yearSelect.addEventListener('change', (e) => {
+        currentYear = parseInt(e.target.value);
+        updateCalendar();
+        updateSummary();
+    });
+    
+    monthSelect.addEventListener('change', (e) => {
+        currentMonth = parseInt(e.target.value);
+        updateCalendar();
+        updateSummary();
+    });
+    
+    summaryType.addEventListener('change', updateSummary);
+    
+    gotoIndexBtn.addEventListener('click', () => {
+        window.location.href = 'index.html';
+    });
+    
+    addTodoButton.addEventListener('click', addTodo);
+    
+    newTodoInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            addTodo();
+        }
+    });
+    
+    applySuccessRateButton.addEventListener('click', applySuccessRate);
+    
+    initializeSelects();
+    updateCalendar();
+    updateSummary();
+    updateMemoryUsage();
+    
+    // 페이지 로드 시 todo 리스트 상태 복원
+    if (isTodoVisible) {
+        const lastOpenedDate = localStorage.getItem('lastOpenedTodoDate');
+        if (lastOpenedDate) {
+            toggleTodoList(lastOpenedDate);
+        }
+    }
+
+    memoContent.addEventListener('blur', saveMemo);
+    
+    // 페이지 언로드 시 마지막으로 열린 todo 날짜 저장
+    window.addEventListener('beforeunload', () => {
+        if (isTodoVisible) {
+            localStorage.setItem('lastOpenedTodoDate', todoDate.textContent);
+        }
+    });
+
+    </script>
+</body>
+</html>
